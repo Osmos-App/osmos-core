@@ -7,7 +7,7 @@ use crate::{OsmosError, Result};
 /// SQLite-backed metadata store + content-addressable blob directory.
 ///
 /// Layout on disk:
-/// ```
+/// ```text
 /// <repo_root>/.osmos/
 ///   meta.db      — SQLite (repos, commits, trees, branches, peers)
 ///   blobs/ab/cd… — blob files named by BLAKE3 hex prefix-sharded
