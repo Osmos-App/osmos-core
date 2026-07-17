@@ -1,0 +1,33 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="360" viewBox="0 0 1200 360" role="img" aria-labelledby="title desc">
+  <title id="title">Osmos Core</title>
+  <desc id="desc">A local version-control engine: a working directory is hashed into content-addressable blobs and metadata, then exposed through a Unix socket daemon.</desc>
+  <rect width="1200" height="360" rx="26" fill="#101514"/>
+  <path d="M48 78H1152M48 288H1152" stroke="#31403d"/>
+  <g font-family="ui-monospace, SFMono-Regular, Menlo, monospace" letter-spacing="2">
+    <text x="58" y="54" fill="#80d8c7" font-size="14">RUST WORKSPACE / LOCAL VERSIONING ENGINE</text>
+    <text x="58" y="111" fill="#f2f5f3" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, sans-serif" font-size="56" font-weight="700" letter-spacing="-2">Osmos Core</text>
+    <text x="58" y="151" fill="#b7c2bf" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, sans-serif" font-size="21" letter-spacing="0">Content-addressable local history, with a daemon API for clients.</text>
+  </g>
+  <g transform="translate(58 199)">
+    <rect width="190" height="56" rx="10" fill="#17211f" stroke="#3e5650"/>
+    <text x="18" y="24" fill="#80d8c7" font-family="ui-monospace, monospace" font-size="12">01 / WORKING TREE</text>
+    <text x="18" y="43" fill="#f2f5f3" font-family="-apple-system, sans-serif" font-size="16">directory changes</text>
+    <path d="M205 28H252" stroke="#80d8c7" stroke-width="2"/><path d="M246 22l8 6-8 6" fill="none" stroke="#80d8c7" stroke-width="2"/>
+    <rect x="260" width="190" height="56" rx="10" fill="#17211f" stroke="#3e5650"/>
+    <text x="278" y="24" fill="#80d8c7" font-family="ui-monospace, monospace" font-size="12">02 / BLAKE3</text>
+    <text x="278" y="43" fill="#f2f5f3" font-family="-apple-system, sans-serif" font-size="16">deduplicated blobs</text>
+    <path d="M465 28H512" stroke="#80d8c7" stroke-width="2"/><path d="M506 22l8 6-8 6" fill="none" stroke="#80d8c7" stroke-width="2"/>
+    <rect x="520" width="190" height="56" rx="10" fill="#17211f" stroke="#3e5650"/>
+    <text x="538" y="24" fill="#80d8c7" font-family="ui-monospace, monospace" font-size="12">03 / SQLITE</text>
+    <text x="538" y="43" fill="#f2f5f3" font-family="-apple-system, sans-serif" font-size="16">repos &amp; branches</text>
+  </g>
+  <g transform="translate(852 104)">
+    <rect width="290" height="150" rx="14" fill="#15201e" stroke="#4d6d65"/>
+    <text x="22" y="31" fill="#80d8c7" font-family="ui-monospace, monospace" font-size="12" letter-spacing="1.5">.OSMOS / ON DISK</text>
+    <path d="M22 52H267" stroke="#385048"/>
+    <text x="22" y="79" fill="#eef4f1" font-family="ui-monospace, monospace" font-size="16">meta.db</text>
+    <text x="22" y="105" fill="#eef4f1" font-family="ui-monospace, monospace" font-size="16">blobs/ab/cd…</text>
+    <text x="22" y="132" fill="#aebbb7" font-family="ui-monospace, monospace" font-size="13">unix socket → clients</text>
+  </g>
+  <text x="58" y="323" fill="#8d9a96" font-family="ui-monospace, monospace" font-size="13" letter-spacing="1">CORE · DAEMON · TRANSPORT (PLANNED)</text>
+</svg>
