@@ -4,6 +4,8 @@
 
 # Osmos Core
 
+[🇬🇧 English](README.md) · [🇹🇷 Türkçe](README.tr.md)
+
 `osmos-core` is the Rust engine behind Osmos. It records a directory's local history in content-addressable storage, keeps repository metadata in SQLite, and exposes the work through a Unix-domain-socket daemon for client applications.
 
 > Status: local versioning and the daemon API are implemented. Peer discovery and QUIC transport remain planned work.
