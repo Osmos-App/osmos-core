@@ -1,28 +1,28 @@
-use serde::{Deserialize, Serialize};
-use uuid::Uuid;
+use crate::{store::Store, Result};
 use chrono::{DateTime, Utc};
+use serde::{Deserialize, Serialize};
 use std::path::Path;
-use crate::{Result, store::Store};
+use uuid::Uuid;
 
 /// A point-in-time snapshot of a repository's working tree.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Commit {
-    pub id:         Uuid,
-    pub repo_id:    Uuid,
+    pub id: Uuid,
+    pub repo_id: Uuid,
     /// Empty for the root commit; two entries for a merge commit.
     pub parent_ids: Vec<Uuid>,
-    pub message:    String,
+    pub message: String,
     /// BLAKE3 hex hash identifying the tree snapshot stored in `tree_entries`.
-    pub tree_hash:  String,
-    pub author:     String,
+    pub tree_hash: String,
+    pub author: String,
     pub created_at: DateTime<Utc>,
 }
 
 /// A single file entry within a commit's tree snapshot.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct TreeEntry {
-    pub name:       String,
-    pub blob_hash:  String,
+    pub name: String,
+    pub blob_hash: String,
     pub size_bytes: u64,
 }
 
@@ -52,7 +52,8 @@ impl Commit {
         {
             let abs = entry.path();
             let (blob_hash, size_bytes) = store.write_blob_streaming(abs)?;
-            let rel = abs.strip_prefix(repo_root)
+            let rel = abs
+                .strip_prefix(repo_root)
                 .unwrap_or(abs)
                 .to_string_lossy()
                 .to_string();
@@ -60,7 +61,11 @@ impl Commit {
             tree_hasher.update(rel.as_bytes());
             tree_hasher.update(blob_hash.as_bytes());
 
-            entries.push(TreeEntry { name: rel, blob_hash, size_bytes });
+            entries.push(TreeEntry {
+                name: rel,
+                blob_hash,
+                size_bytes,
+            });
         }
 
         let tree_hash = tree_hasher.finalize().to_hex().to_string();
@@ -75,12 +80,12 @@ impl Commit {
         }
 
         let commit = Commit {
-            id:         Uuid::new_v4(),
+            id: Uuid::new_v4(),
             repo_id,
             parent_ids,
-            message:    message.to_owned(),
+            message: message.to_owned(),
             tree_hash,
-            author:     author.to_owned(),
+            author: author.to_owned(),
             created_at: Utc::now(),
         };
 

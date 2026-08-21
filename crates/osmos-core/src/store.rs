@@ -1,8 +1,8 @@
-use rusqlite::{Connection, params};
+use crate::{OsmosError, Result};
+use rusqlite::{params, Connection};
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};
 use uuid::Uuid;
-use crate::{OsmosError, Result};
 
 /// SQLite-backed metadata store + content-addressable blob directory.
 ///
@@ -36,13 +36,15 @@ impl Store {
     }
 
     fn migrate(&self) -> Result<()> {
-        let version: i32 = self.conn
+        let version: i32 = self
+            .conn
             .query_row("PRAGMA user_version", [], |r| r.get(0))
             .unwrap_or(0);
 
         // v0 → v1: base schema
         if version < 1 {
-            self.conn.execute_batch("
+            self.conn.execute_batch(
+                "
                 CREATE TABLE IF NOT EXISTS repositories (
                     id          TEXT PRIMARY KEY,
                     name        TEXT NOT NULL,
@@ -88,22 +90,26 @@ impl Store {
                 );
 
                 PRAGMA user_version = 1;
-            ")?;
+            ",
+            )?;
         }
 
         // v1 → v2: add parent_ids + branches to pre-existing databases
         if version == 1 {
             // ALTER TABLE doesn't support IF NOT EXISTS — ignore error if column exists.
             let _ = self.conn.execute_batch(
-                "ALTER TABLE commits ADD COLUMN parent_ids TEXT NOT NULL DEFAULT '[]';"
+                "ALTER TABLE commits ADD COLUMN parent_ids TEXT NOT NULL DEFAULT '[]';",
             );
             // Backfill parent_ids from the legacy parent_id column.
-            self.conn.execute_batch("
+            self.conn.execute_batch(
+                "
                 UPDATE commits
                 SET parent_ids = json_array(parent_id)
                 WHERE parent_id IS NOT NULL AND parent_ids = '[]';
-            ")?;
-            self.conn.execute_batch("
+            ",
+            )?;
+            self.conn.execute_batch(
+                "
                 CREATE TABLE IF NOT EXISTS branches (
                     id             TEXT PRIMARY KEY,
                     repo_id        TEXT NOT NULL REFERENCES repositories(id),
@@ -113,7 +119,8 @@ impl Store {
                     UNIQUE(repo_id, name)
                 );
                 PRAGMA user_version = 2;
-            ")?;
+            ",
+            )?;
         }
 
         Ok(())
@@ -146,7 +153,9 @@ impl Store {
 
     pub fn read_blob(&self, hash: &str) -> Result<Vec<u8>> {
         let path = self.blob_path(hash);
-        std::fs::read(&path).map_err(|_| OsmosError::BlobNotFound { hash: hash.to_owned() })
+        std::fs::read(&path).map_err(|_| OsmosError::BlobNotFound {
+            hash: hash.to_owned(),
+        })
     }
 
     fn blob_path(&self, hash: &str) -> PathBuf {
@@ -195,7 +204,7 @@ impl Store {
                 created_at: chrono::DateTime::parse_from_rfc3339(&created_at)
                     .unwrap_or_default()
                     .with_timezone(&chrono::Utc),
-                mode: crate::repo::RepoMode::from_str(&mode),
+                mode: mode.parse().unwrap_or(crate::repo::RepoMode::Client),
             });
         }
         Ok(repos)
@@ -258,8 +267,8 @@ impl Store {
         if let Some(row) = rows.next() {
             let (id, rid, parent_ids_str, message, tree_hash, author, created_at) = row?;
             Ok(Some(crate::commit::Commit {
-                id:         Uuid::parse_str(&id).unwrap_or_default(),
-                repo_id:    Uuid::parse_str(&rid).unwrap_or_default(),
+                id: Uuid::parse_str(&id).unwrap_or_default(),
+                repo_id: Uuid::parse_str(&rid).unwrap_or_default(),
                 parent_ids: serde_json::from_str(&parent_ids_str).unwrap_or_default(),
                 message,
                 tree_hash,
@@ -295,8 +304,8 @@ impl Store {
         for row in rows {
             let (id, rid, parent_ids_str, message, tree_hash, author, created_at) = row?;
             commits.push(crate::commit::Commit {
-                id:         Uuid::parse_str(&id).unwrap_or_default(),
-                repo_id:    Uuid::parse_str(&rid).unwrap_or_default(),
+                id: Uuid::parse_str(&id).unwrap_or_default(),
+                repo_id: Uuid::parse_str(&rid).unwrap_or_default(),
                 parent_ids: serde_json::from_str(&parent_ids_str).unwrap_or_default(),
                 message,
                 tree_hash,
@@ -311,12 +320,14 @@ impl Store {
 
     /// DAG walk from `head_id`, returns all reachable commits newest-first.
     pub fn list_commits_from(&self, head_id: Uuid) -> Result<Vec<crate::commit::Commit>> {
-        let mut result   = Vec::new();
+        let mut result = Vec::new();
         let mut to_visit = vec![head_id];
-        let mut visited  = std::collections::HashSet::new();
+        let mut visited = std::collections::HashSet::new();
 
         while let Some(id) = to_visit.pop() {
-            if !visited.insert(id) { continue; }
+            if !visited.insert(id) {
+                continue;
+            }
             if let Some(commit) = self.get_commit(id)? {
                 for &pid in &commit.parent_ids {
                     to_visit.push(pid);
@@ -325,7 +336,7 @@ impl Store {
             }
         }
 
-        result.sort_by(|a, b| b.created_at.cmp(&a.created_at));
+        result.sort_by_key(|b| std::cmp::Reverse(b.created_at));
         Ok(result)
     }
 
@@ -333,9 +344,9 @@ impl Store {
 
     /// Returns `{ relative_path → (blob_hash, size_bytes) }` for a tree hash.
     pub fn get_tree_map(&self, tree_hash: &str) -> Result<HashMap<String, (String, u64)>> {
-        let mut stmt = self.conn.prepare(
-            "SELECT name, blob_hash, size_bytes FROM tree_entries WHERE tree_hash = ?1",
-        )?;
+        let mut stmt = self
+            .conn
+            .prepare("SELECT name, blob_hash, size_bytes FROM tree_entries WHERE tree_hash = ?1")?;
         let rows = stmt.query_map(params![tree_hash], |row| {
             Ok((
                 row.get::<_, String>(0)?,
@@ -385,11 +396,11 @@ impl Store {
         if let Some(row) = rows.next() {
             let (id, rid, name, head_str, created_at) = row?;
             Ok(Some(crate::branch::Branch {
-                id:             Uuid::parse_str(&id).unwrap_or_default(),
-                repo_id:        Uuid::parse_str(&rid).unwrap_or_default(),
+                id: Uuid::parse_str(&id).unwrap_or_default(),
+                repo_id: Uuid::parse_str(&rid).unwrap_or_default(),
                 name,
                 head_commit_id: head_str.and_then(|s| Uuid::parse_str(&s).ok()),
-                created_at:     chrono::DateTime::parse_from_rfc3339(&created_at)
+                created_at: chrono::DateTime::parse_from_rfc3339(&created_at)
                     .unwrap_or_default()
                     .with_timezone(&chrono::Utc),
             }))
@@ -416,11 +427,11 @@ impl Store {
         for row in rows {
             let (id, rid, name, head_str, created_at) = row?;
             branches.push(crate::branch::Branch {
-                id:             Uuid::parse_str(&id).unwrap_or_default(),
-                repo_id:        Uuid::parse_str(&rid).unwrap_or_default(),
+                id: Uuid::parse_str(&id).unwrap_or_default(),
+                repo_id: Uuid::parse_str(&rid).unwrap_or_default(),
                 name,
                 head_commit_id: head_str.and_then(|s| Uuid::parse_str(&s).ok()),
-                created_at:     chrono::DateTime::parse_from_rfc3339(&created_at)
+                created_at: chrono::DateTime::parse_from_rfc3339(&created_at)
                     .unwrap_or_default()
                     .with_timezone(&chrono::Utc),
             });
@@ -431,10 +442,7 @@ impl Store {
     pub fn update_branch_head(&self, branch_id: Uuid, head_commit_id: Option<Uuid>) -> Result<()> {
         self.conn.execute(
             "UPDATE branches SET head_commit_id = ?1 WHERE id = ?2",
-            params![
-                head_commit_id.map(|u| u.to_string()),
-                branch_id.to_string(),
-            ],
+            params![head_commit_id.map(|u| u.to_string()), branch_id.to_string(),],
         )?;
         Ok(())
     }

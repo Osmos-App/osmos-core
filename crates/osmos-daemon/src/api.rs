@@ -5,14 +5,14 @@ use uuid::Uuid;
 
 #[derive(Debug, Deserialize)]
 pub struct Request {
-    pub id:  Uuid,
+    pub id: Uuid,
     pub cmd: Command,
 }
 
 #[derive(Debug, Serialize)]
 pub struct Response {
-    pub id:   Uuid,
-    pub ok:   bool,
+    pub id: Uuid,
+    pub ok: bool,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub data: Option<serde_json::Value>,
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -22,15 +22,15 @@ pub struct Response {
 #[derive(Debug, Serialize)]
 pub struct ApiError {
     pub code: String,
-    pub msg:  String,
+    pub msg: String,
 }
 
 impl Response {
     pub fn ok(id: Uuid, data: impl Serialize) -> Self {
         Self {
             id,
-            ok:    true,
-            data:  Some(serde_json::to_value(data).unwrap_or(serde_json::Value::Null)),
+            ok: true,
+            data: Some(serde_json::to_value(data).unwrap_or(serde_json::Value::Null)),
             error: None,
         }
     }
@@ -38,9 +38,12 @@ impl Response {
     pub fn err(id: Uuid, code: &str, msg: impl std::fmt::Display) -> Self {
         Self {
             id,
-            ok:    false,
-            data:  None,
-            error: Some(ApiError { code: code.to_owned(), msg: msg.to_string() }),
+            ok: false,
+            data: None,
+            error: Some(ApiError {
+                code: code.to_owned(),
+                msg: msg.to_string(),
+            }),
         }
     }
 }
@@ -82,7 +85,9 @@ pub struct InitRepoParams {
     pub mode: String,
 }
 
-fn default_client() -> String { "client".to_owned() }
+fn default_client() -> String {
+    "client".to_owned()
+}
 
 #[derive(Debug, Deserialize)]
 pub struct RepoPathParams {
@@ -91,9 +96,9 @@ pub struct RepoPathParams {
 
 #[derive(Debug, Deserialize)]
 pub struct CreateCommitParams {
-    pub path:    String,
+    pub path: String,
     pub message: String,
-    pub author:  String,
+    pub author: String,
 }
 
 #[derive(Debug, Deserialize)]
@@ -105,8 +110,8 @@ pub struct ListCommitsParams {
 
 #[derive(Debug, Deserialize)]
 pub struct CreateBranchParams {
-    pub path:        String,
-    pub name:        String,
+    pub path: String,
+    pub name: String,
     /// Fork from this branch instead of the current HEAD.
     pub from_branch: Option<String>,
 }
@@ -119,10 +124,10 @@ pub struct SwitchBranchParams {
 
 #[derive(Debug, Deserialize)]
 pub struct MergeBranchParams {
-    pub path:          String,
+    pub path: String,
     pub source_branch: String,
-    pub message:       String,
-    pub author:        String,
+    pub message: String,
+    pub author: String,
 }
 
 #[derive(Debug, Deserialize)]
